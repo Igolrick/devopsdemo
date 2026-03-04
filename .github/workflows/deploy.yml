@@ -55,38 +55,28 @@ jobs:
 
       - name: Extract version from tag
         id: extract_version
-        run: |
-          TAG_NAME="${{ github.ref_name }}"
-          if [[ "$TAG_NAME" == *"beta"* ]]; then
-            VERSION="${TAG_NAME}"
-          else
-            VERSION="${TAG_NAME}"
-          fi
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        run: echo "VERSION=${{ github.ref_name }}" >> $GITHUB_OUTPUT
 
       - name: Check if pre-release
         id: prerelease
         run: |
-          if [[ "${{ steps.extract_version.outputs.version }}" == *"beta"* ]]; then
-            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+          if [[ "${{ github.ref_name }}" == *"beta"* ]]; then
+            echo "IS_PRERELEASE=true" >> $GITHUB_OUTPUT
           else
-            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+            echo "IS_PRERELEASE=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Create ZIP archive
         run: |
-          VERSION="${{ steps.extract_version.outputs.version }}"
           cd public
-          zip -r /DevOps-Demo-${VERSION}.zip .
-          cd ..
-          ls -la /DevOps-Demo-${VERSION}.zip
+          zip -r "../DevOps-Demo-${{ steps.extract_version.outputs.VERSION }}.zip" .
 
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          tag: ${{ steps.extract_version.outputs.version }}
-          name: ${{ steps.extract_version.outputs.version }}
-          artifacts: "/DevOps-Demo-${{ steps.extract_version.outputs.version }}.zip"
-          prerelease: ${{ steps.extract_version.outputs.is_prerelease == 'true' }}
+          tag: ${{ steps.extract_version.outputs.VERSION }}
+          name: ${{ steps.extract_version.outputs.VERSION }}
+          artifacts: "DevOps-Demo-${{ steps.extract_version.outputs.VERSION }}.zip"
+          prerelease: ${{ steps.prerelease.outputs.IS_PRERELEASE }}
           allowUpdates: true
           token: ${{ secrets.GITHUB_TOKEN }}
